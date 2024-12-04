@@ -1,12 +1,4 @@
-# Gitlab Brute-Force
+# 原作者：https://github.com/9bie/GitLabBrute
 
-枚举gitlab用户并爆破
-
-FROM: https://www.t00ls.com/articles-69405.html
-
-```
-useage:
-	python main.py http://target.com
-```
-
-密码自行在脚本中修改，支持`{{username}}`代替用户名
+- 原作者的脚本会在0和1反复横跳，修改脚本便利用户后进行爆破
+- 默认遍历到100可在脚本修改

